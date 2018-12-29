@@ -1,0 +1,63 @@
+﻿Bozsik Armand Viktor
+
+A program az alabbi funkciokat tudja:
+-------------------------------------
+
+- Minimálisan szükséges, statikus geometriai modellek (3 pont)
+-- A bár helyisége – padló, falak, plafon.
+-- Egér segítségével a plafon és kettő szomszédos fal eltüntethető.
+-- Egy teljes bárpult (könyöklő, italos polc, sörcsap, poharak) és egy biliárdasztal (zöld posztó, golyók, dákók) modellje. Beépített Three.js geometriákból vannak, és legalább 4-4 elemből állnak.
+-- Legalább 3 különböző statikus tereptárgy (pl.: asztal, bárszék, zenegép, hűtő).
+-- Beépített Three.js geometriák használata (1 pont)
+
+- Animáció (2 pont)
+-- Legalább 2 animált tereptárgy.
+--- Legalább 1 db animáció, amely billentyűk vagy egér segítségével mozgatható. (Az ajtó)
+--- Legalább 1 db animáció, amely időzítő segítségével önállóan mozog. (A ventillátor) 
+
+- Interakció (1 pont)
+-- A színteret körbe lehet forgatni egérrel és/vagy a kurzormozgató billentyűk segítségével.
+-- Az ablak bal felső sarkában megjelenik a nevem, NEPTUN azonosítóm, valamint a szakom és az aktuális tanév megnevezése.
+-- Az ablak jobb felső sarkában megjelenik a használható billentyűk felsorolása a funkciók megadásával együtt.
+-- A szöveges információkat ki/be lehet kapcsolni az F1 billentyűvel.
+
+- Megvilágítás (2 pont)
+-- Ambiens fény.
+-- Legalább 1 db be-kikapcsolható pontfény.
+-- Legalább 1 db reflektorfény.
+-- Megvilágításra alkalmas anyag objektum (Lambert vagy Phong).
+
+ 
+- Plusz pontok (maximum 4 pont)
+-- Textúrázott objektumok.
+-- Blender textúrázás 1 pont. 
+-- Tween animáció 1 pont.
+-- További fejlett funkciók alkalmazása (1-2 pont minőség és munkaigény szerint). 
+--- PositionalAudioval egész realisztikusan szól a zenegép. Az általam a funkcióhoz felhasznált audiofájlt hivatkoztam és mellékeltem. 
+--- FPS statisztika
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+A texturak forrasfajljat is mellekeltem, megnyitasukhoz a legfrisebb GIMP szukseges.
+
+A billiardgolyo Blender modellezes lepesei.
+
+I. Elkeszitettem GIMP-ben a texturakepet.
+I.1. 512x512px (ketto hatvany, ezt a ThreeJS-nek es a bongeszonek nem kell mereteznie, nem dob warningot)
+I.2. Fekete hatterszinnel valo kitoltes
+I.3. Racsvonalak beallitasa
+I.4. Transparent layerre szabalyos koralaku kijeloles ellipse toolal az I.3. alapjan.
+I.5. A kijeloles kitoltese feher szinnel
+I.6. Sans-serif betutipussal 62px meretben (Antialiasing, Hinting: Medium, Box: Dynamic) felirtam a szamot.
+II. Blender
+II.1. Toroltem a kockat.
+II.2. Hozzaadtam egy UV Sphere-t.
+II.2.1. Adtam neki anyagot
+II.2.2. Illetve texturat is
+II.3. Hozzadtam egy UVMap-et.
+II.4. A Texture-nel beallitottam az UV-t, UVMap-et
+II.5. UV Editing-ben szelessegi kor menten szetvagtam a golyot (Alt)
+II.6. Savokra osztottam (Ctrl+E > Mark Seam)
+II.7. Kijrloltem az elemeket, majd Unwrapeltem
+II.8. A megjeleno korlapokat a helyukre pakoltam.
+II.9. Vegul elmentettem obj formatumba.

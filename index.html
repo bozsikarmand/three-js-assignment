@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8>
+    <title>Armand's Bar</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+        #studentText {
+            position: absolute;
+            top: 9px;
+            left: 9px;
+            width: 50%;
+            text-align: left;
+            z-index: 100;
+            display: block;
+            color: white;
+        }
+        #studentInfo {
+            position: absolute;
+            top: 28px;
+            left: 9px;
+            width: 50%;
+            text-align: left;
+            z-index: 100;
+            display: block;
+            color: white;
+            opacity: 1.0;
+        }
+        #keyText {
+            position: absolute;
+            top: 9px;
+            right: 9px;
+            width: 50%;
+            text-align: right;
+            z-index: 100;
+            display: block;
+            color: white;
+        }
+        #keyInfo {
+            position: absolute;
+            top: 29px;
+            right: 9px;
+            width: 50%;
+            text-align: right;
+            z-index: 100;
+            display: block;
+            color: white;
+            opacity: 1.0;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+
+<body onload="blenderLoader()">
+    <script src="js-r96/three.js"></script>
+    <script src="js-r96/TrackballControls.js"></script>
+    <script src="js-r96/tween.min.js"></script>
+    <script src="js-r96/dat.gui.min.js"></script>
+    <script src="js-r96/stats.min.js"></script>
+    <script src="js-r96/OBJLoader.js"></script>
+    <script src="js-r96/MTLLoader.js"></script>
+
+    <script>
+        // SZINTERELEMEK - Globalis valtozok a szinterelemekhez es a vezerleshez
+        var WIDTH, HEIGHT, aspectRatio;
+        var renderer;
+        var scene, camera;
+        var controls;
+
+        // Valtozok a padlohoz, a falakhoz es a plafonhoz
+        var groundGeometry, groundMaterial,groundMesh;
+        var wallNorthGeometry, wallNorthMaterial, wallNorthMesh;
+        var wallSouthGeometry, wallSouthMaterial, wallSouthMesh;
+        var wallEastLeftGeometry, wallEastLeftMaterial, wallEastLeftMesh;
+        var wallEastRightGeometry, wallEastRightMaterial, wallEastRightMesh;
+        var wallWestGeometry, wallWestMaterial, wallWestMesh;
+        var roofGeometry, roofMaterial, roofMesh;
+
+        // Textura az asztalhoz (tobb helyen is felhasznaltam vegul)
+        // Az asztal, elemnkent
+        var textureCounterTopLoader, textureCounterTop, textureLoader, snookerTopTexture, snookerTableTexture;
+        var counterTopGeometry, counterTopMaterial, counterTopMesh;
+        var counterBottomGeometry, counterBottomMaterial, counterBottomMesh;
+        var counterNorthSideGeometry, counterNorthSideMaterial, counterNorthSideMesh;
+        var counterSouthSideGeometry, counterSouthSideMaterial, counterSouthSideMesh;
+        var counterEastSideGeometry, counterEastSideMaterial, counterEastSideMesh;
+        var counterWestSideGeometry, counterWestSideMaterial, counterWestSideMesh;
+        var counterStandGeometry, counterStandMaterial, counterStandMesh;
+
+        // Polc, elemenkent
+        var shelfBackGeometry, shelfBackMaterial, shelfBackMesh;
+        var shelfBottomLevelGeometry, shelfBottomLevelMaterial, shelfBottomLevelMesh;
+        var shelfMiddleLevelGeometry, shelfMiddleLevelMaterial, shelfMiddleLevelMesh;
+        var shelfTopLevelGeometry, shelfTopLevelMaterial, shelfTopLevelMesh;
+
+        // Sorcsap, ket soroshordo, az oldalukon 1-1 csappal
+        var path, beerTapGeometry, beerTapMaterial, beerTapMesh;
+        var beerKegGeometry, beerKegMaterial, beerKegMesh;
+        var beerKeg2Geometry, beerKeg2Material, beerKeg2Mesh;
+        var beerKegTapGeometry, beerKegTapMaterial, beerKegTapMesh;
+        var beerKeg2TapGeometry, beerKeg2TapMaterial, beerKeg2TapMesh;
+
+        // Billiardasztal teteje
+        // Billiardasztal alja
+        // 4 db golyo
+        var snookerTopGeometry, snookerTopMaterial, snookerTopMesh;
+        var snookerTableGeometry, snookerTableMaterial, snookerTableMesh;
+        var ball1Geometry, ball1Material, ball1Mesh;
+        var ball2Geometry, ball2Material, ball2Mesh;
+        var ball3Geometry, ball3Material, ball3Mesh;
+        var ball4Geometry, ball4Material, ball4Mesh;
+
+        // Barszek labai
+        var barChairStand1Geometry, barChairStand1Material, barChairStand1Mesh;
+        var barChairStand2Geometry, barChairStand2Material, barChairStand2Mesh;
+        var barChairStand3Geometry, barChairStand3Material, barChairStand3Mesh;
+        var barChairStand4Geometry, barChairStand4Material, barChairStand4Mesh;
+
+        // Barszek ulofelulet
+        var barChairSitGeometry, barChairSitMaterial, barChairSitMesh;
+        var barChairBackGeometry, barChairBackMaterial, barChairBackMesh;
+
+        // Masik barszek labai
+        var barChair2Stand1Geometry, barChair2Stand1Material, barChair2Stand1Mesh;
+        var barChair2Stand2Geometry, barChair2Stand2Material, barChair2Stand2Mesh;
+        var barChair2Stand3Geometry, barChair2Stand3Material, barChair2Stand3Mesh;
+        var barChair2Stand4Geometry, barChair2Stand4Material, barChair2Stand4Mesh;
+
+        // Masik barszek ulofelulete
+        var barChair2SitGeometry, barChair2SitMaterial, barChair2SitMesh;
+        var barChair2BackGeometry, barChair2BackMaterial, barChair2BackMesh;
+
+        // Harmadik barszek labai
+        var barChair3Stand1Geometry, barChair3Stand1Material, barChair3Stand1Mesh;
+        var barChair3Stand2Geometry, barChair3Stand2Material, barChair3Stand2Mesh;
+        var barChair3Stand3Geometry, barChair3Stand3Material, barChair3Stand3Mesh;
+        var barChair3Stand4Geometry, barChair3Stand4Material, barChair3Stand4Mesh;
+
+        // Harmadik barszek ulofelulete
+        var barChair3SitGeometry, barChair3SitMaterial, barChair3SitMesh;
+        var barChair3BackGeometry, barChair3BackMaterial, barChair3BackMesh;
+
+        // Negyedik barszek labai
+        var barChair4Stand1Geometry, barChair4Stand1Material, barChair4Stand1Mesh;
+        var barChair4Stand2Geometry, barChair4Stand2Material, barChair4Stand2Mesh;
+        var barChair4Stand3Geometry, barChair4Stand3Material, barChair4Stand3Mesh;
+        var barChair4Stand4Geometry, barChair4Stand4Material, barChair4Stand4Mesh;
+
+        // Negyedik barszek ulofelulete
+        var barChair4SitGeometry, barChair4SitMaterial, barChair4SitMesh;
+        var barChair4BackGeometry, barChair4BackMaterial, barChair4BackMesh;
+
+        // Korso talpa
+        // Korso nyaka
+        // Korso alja
+        // Korso oldala
+        var cupStand1Geometry, cupStand1Material, cupStand1Mesh;
+        var cupNeck1Geometry, cupNeck1Material, cupNeck1Mesh;
+        var cupSipBottom1Geometry, cupSipBottom1Material, cupSipBottom1Mesh;
+        var cupSipSide1Geometry, cupSipSide1Material, cupSipSide1Mesh;
+
+        // Korso talpa
+        // Korso nyaka
+        // Korso alja
+        // Korso oldala
+        var cupStand2Geometry, cupStand2Material, cupStand2Mesh;
+        var cupNeck2Geometry, cupNeck2Material, cupNeck2Mesh;
+        var cupSipBottom2Geometry, cupSipBottom2Material, cupSipBottom2Mesh;
+        var cupSipSide2Geometry, cupSipSide2Material, cupSipSide2Mesh;
+
+        // Csoportba foglalva
+        var cupGroupOne, cupGroupTwo;
+
+        // Ambiens feny a falon
+        var halfLampAmbientLight1, halfLampAmbientLight2;
+        var lamp1Geometry, lamp1Material, lamp1Half;
+        var lamp2Geometry, lamp2Material, lamp2Half;
+
+        // Huto a sarokban
+        // Alja, kozepe, teteje, nyitofule
+        var fridgeLowerGeometry, fridgeLowerMaterial, fridgeLowerMesh;
+        var fridgeMidGeometry, fridgeMidMaterial, fridgeMidMesh;
+        var fridgeTopGeometry, fridgeTopMaterial, fridgeTopMesh;
+        var fridgeOpenerGeometry, fridgeOpenerMaterial, fridgeOpenerMesh;
+
+        // Zenegep hangtolcser
+        // Zenegep talp
+        // Zenegep osszekoto elem
+        // Zenegep toldas
+        // Bakelit lemez
+        // positionalAudio a valosaghubb hangzasert
+        var phonographCylinderGeometry, phonographCylinderMaterial, phonographCylinderMesh;
+        var phonographStandGeometry, phonographStandMaterial, phonographStandMesh;
+        var phonographStandExtenderGeometry, phonographStandExtenderMaterial, phonographStandExtenderMesh;
+        var phonographStandPoleGeometry, phonographStandPoleMaterial, phonographStandPoleMesh;
+        var recordGeometry, recordMaterial, recordMesh;
+        var phonographAudioListener, positionalAudio, load;
+
+        // Ambiens feny a szek ulofeluketere
+        var barChairSitAmbientLight;
+
+        // Iranyvektorok a sorcsap gorbuletenek meretezeshez
+        var tapx, tapy, tapz;
+
+        //Pontfeny
+        var pointLight;
+
+        // Peflektorfeny
+        var spotLight;
+
+        // A billiardasztal oldalai
+        var snookerSide1Geometry, snookerSide2Geometry, snookerSide3Geometry, snookerSide4Geometry;
+        var snookerSide1Material, snookerSide2Material, snookerSide3Material, snookerSide4Material;
+        var snookerSide1Mesh, snookerSide2Mesh, snookerSide3Mesh, snookerSide4Mesh;
+
+        // Dakok
+        var cue1Geometry, cue1Material, cue1Mesh;
+        var cue2Geometry, cue2Material, cue2Mesh;
+        var cue3Geometry, cue3Material, cue3Mesh;
+        var cue4Geometry, cue4Material, cue4Mesh;
+
+        // Ventillator felfuggesztese
+        var fanPoleGeometry, fanPoleMaterial, fanPoleMesh;
+
+        // Ventillator
+        var fanGeometry, fanMaterial, fanMesh;
+
+        // Ajto es felette az uveg
+        var doorGeometry, doorMaterial, doorMesh;
+        var wallDoorUpGeometry, wallDoorUpMaterial, wallDoorUpMesh;
+
+        // Plusz retegnyi talaj. Kesobb padlofuteshez jol jon...
+        var groundDownGeometry, groundDownMaterial, groundDownMesh;
+
+        // ANIMACIOK - Globalis valtozok az animaciokhoz
+        // Ajto start pozicio, ajto megallasi pozicio, ajtonyitas TWEEN-hez valtozo, ajtozaras TWEEN-hez valtozo
+        var doorStart;
+        var doorEnd;
+        var doorOpen;
+        var doorClose;
+
+        // Globalis valtozok a meretezeshez es a dolesszogekhez, dat guihoz
+        var info;
+
+        // Statisztika
+        var statsForFPS;
+
+        function init() {
+            // Informaciok megjelenitese
+            var info = document.getElementById(info);
+            // Böngésző ablakméret lekérése és méretarány számítása
+            HEIGHT = window.innerHeight;
+            WIDTH = window.innerWidth;
+            aspectRatio = WIDTH / HEIGHT;
+
+            // Renderer letrehozása es DOM-hoz adasa
+            renderer = new THREE.WebGLRenderer( { antialias: true } );
+            renderer.setSize( WIDTH, HEIGHT );
+            renderer.setClearColor( 0x000000 );
+            document.body.appendChild( renderer.domElement );
+
+            // FPS objektum letrehozasa es DOM-hz adasa
+            statsForFPS = new Stats();
+            statsForFPS.domElement.style.cssText = 'position: fixed;bottom: 0px; left: 0px';
+            document.body.appendChild(statsForFPS.domElement);
+
+            // Szinter letrehozasa
+            scene = new THREE.Scene();
+
+            // Kamera letrehozasa es vetítesi parametereinek beallitasa
+            camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+            camera.position.set( 360, 180, 40 );
+            camera.lookAt( scene.position );
+
+            // Objektumok letrehozasa
+            // Talaj, falak, plafon START
+
+            groundGeometry = new THREE.PlaneGeometry( 360, 300 );
+            groundMaterial = new THREE.MeshPhongMaterial( {
+                color: 0x008000,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            groundMaterial.map = textureCounterTop;
+            groundMesh = new THREE.Mesh( groundGeometry, groundMaterial );
+            groundMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            groundMesh.position.z = -30;
+            scene.add( groundMesh );
+
+            wallNorthGeometry = new THREE.PlaneGeometry( 360, 120 );
+            wallNorthMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x4a5054,
+                wireframe: false,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.96
+            } );
+            wallNorthMesh = new THREE.Mesh( wallNorthGeometry, wallNorthMaterial );
+            wallNorthMesh.rotation.x = -1.0 * THREE.Math.degToRad( 0 );
+            wallNorthMesh.position.z = -180;
+            wallNorthMesh.position.y = 60;
+            scene.add( wallNorthMesh );
+
+            wallSouthGeometry = new THREE.PlaneGeometry( 360, 120 );
+            wallSouthMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xdd3333,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            wallSouthMesh = new THREE.Mesh( wallSouthGeometry, wallSouthMaterial );
+            wallSouthMesh.rotation.x = -1.0 * THREE.Math.degToRad( 0 );
+            wallSouthMesh.position.z = 120;
+            wallSouthMesh.position.y = 60;
+            scene.add( wallSouthMesh );
+
+            wallEastLeftGeometry = new THREE.PlaneGeometry( 115, 120 );
+            wallEastLeftMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xdd3333,
+                wireframe: false,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.4
+            } );
+            wallEastLeftMesh = new THREE.Mesh( wallEastLeftGeometry, wallEastLeftMaterial );
+            wallEastLeftMesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            wallEastLeftMesh.position.y = 60;
+            wallEastLeftMesh.position.z = 63;
+            wallEastLeftMesh.position.x = 180;
+            scene.add( wallEastLeftMesh );
+
+            wallEastRightGeometry = new THREE.PlaneGeometry( 124, 120 );
+            wallEastRightMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xdd3333,
+                wireframe: false,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.4
+            } );
+            wallEastRightMesh = new THREE.Mesh( wallEastRightGeometry, wallEastRightMaterial );
+            wallEastRightMesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            wallEastRightMesh.position.y = 60;
+            wallEastRightMesh.position.z = -118;
+            wallEastRightMesh.position.x = 180;
+            scene.add( wallEastRightMesh );
+
+            wallWestGeometry = new THREE.PlaneGeometry( 300, 120 );
+            wallWestMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xdd3333,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            wallWestMesh = new THREE.Mesh( wallWestGeometry, wallWestMaterial );
+            wallWestMesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            wallWestMesh.position.y = 60;
+            wallWestMesh.position.z = -30;
+            wallWestMesh.position.x = -180;
+            scene.add( wallWestMesh );
+
+            roofGeometry = new THREE.PlaneGeometry( 360, 300 );
+            roofMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x008000,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            roofMesh = new THREE.Mesh( roofGeometry, roofMaterial );
+            roofMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            roofMesh.position.y = 120;
+            roofMesh.position.z = -30;
+            scene.add( roofMesh );
+            // Talaj, falak, plafon END
+
+            // Ventillator a plafonra START
+            fanPoleGeometry = new THREE.CylinderGeometry( 1, 1, 10, 64, 64, false, 6, 6.3 );
+            fanPoleMaterial = new THREE.MeshBasicMaterial(
+                {
+                    color: 0xff0000
+                }
+            );
+            fanPoleMesh = new THREE.Mesh( fanPoleGeometry, fanPoleMaterial );
+            scene.add(fanPoleMesh);
+            fanPoleMesh.position.x = 0;
+            fanPoleMesh.position.y = 115;
+            fanPoleMesh.position.z = -30;
+
+            fanGeometry = new THREE.BoxGeometry( 42, 1, 2, 10, 10, 10 );
+            fanMaterial = new THREE.MeshBasicMaterial(
+                {
+                    color: 0x4a5054
+                }
+            );
+            fanMesh = new THREE.Mesh( fanGeometry, fanMaterial );
+            scene.add( fanMesh );
+            fanMesh.position.y = 111;
+            fanMesh.position.z = -30;
+            // Ventillator a plafonra END
+
+            // Barpult START
+            textureCounterTopLoader = new THREE.TextureLoader();
+            textureCounterTop = textureCounterTopLoader.load( 'assets/texture/CounterTexture.png' );
+
+            counterTopGeometry = new THREE.PlaneGeometry( 200, 50 );
+            counterTopMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xddff33,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            counterTopMaterial.map = textureCounterTop;
+            counterTopMesh = new THREE.Mesh( counterTopGeometry, counterTopMaterial );
+            counterTopMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            counterTopMesh.position.z = 60;
+            counterTopMesh.position.y = 40;
+            scene.add( counterTopMesh );
+
+            counterBottomGeometry = new THREE.PlaneGeometry( 200, 50 );
+            counterBottomMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xddff33,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            counterBottomMesh = new THREE.Mesh( counterBottomGeometry, counterBottomMaterial );
+            counterBottomMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            counterBottomMesh.position.z = 60;
+            counterBottomMesh.position.y = 36;
+            counterBottomMaterial.map = textureCounterTop;
+            scene.add( counterBottomMesh );
+
+            counterNorthSideGeometry = new THREE.PlaneGeometry( 50, 4 );
+            counterNorthSideMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            counterNorthSideMesh = new THREE.Mesh( counterNorthSideGeometry, counterNorthSideMaterial );
+            counterNorthSideMesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            counterNorthSideMesh.position.z = 60;
+            counterNorthSideMesh.position.y = 38;
+            counterNorthSideMesh.position.x = -100;
+            counterNorthSideMaterial.map = textureCounterTop;
+            scene.add( counterNorthSideMesh );
+
+            counterSouthSideGeometry = new THREE.PlaneGeometry( 50, 4 );
+            counterSouthSideMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            counterSouthSideMesh = new THREE.Mesh( counterSouthSideGeometry, counterSouthSideMaterial );
+            counterSouthSideMesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            counterSouthSideMesh.position.z = 60;
+            counterSouthSideMesh.position.y = 38;
+            counterSouthSideMesh.position.x = 100;
+            counterSouthSideMaterial.map = textureCounterTop;
+            scene.add( counterSouthSideMesh );
+
+            counterEastSideGeometry = new THREE.PlaneGeometry( 200, 4 );
+            counterEastSideMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            counterEastSideMesh = new THREE.Mesh( counterEastSideGeometry, counterEastSideMaterial );
+            counterEastSideMesh.rotation.y = -1.0 * THREE.Math.degToRad( 0 );
+            counterEastSideMesh.position.z = 85;
+            counterEastSideMesh.position.y = 38;
+            counterEastSideMesh.position.x = 0;
+            counterEastSideMaterial.map = textureCounterTop;
+            scene.add( counterEastSideMesh );
+
+            counterWestSideGeometry = new THREE.PlaneGeometry( 200, 4 );
+            counterWestSideMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            counterWestSideMesh = new THREE.Mesh( counterWestSideGeometry, counterWestSideMaterial );
+            counterWestSideMesh.rotation.y = -1.0 * THREE.Math.degToRad( 0 );
+            counterWestSideMesh.position.z = 35;
+            counterWestSideMesh.position.y = 38;
+            counterWestSideMesh.position.x = 0;
+            counterWestSideMaterial.map = textureCounterTop;
+            scene.add( counterWestSideMesh );
+
+            counterStandGeometry = new THREE.BoxGeometry( 190, 40, 25 );
+            counterStandMaterial = new THREE.MeshBasicMaterial( { color: 0xddff33, wireframe: false } );
+            counterStandMesh = new THREE.Mesh( counterStandGeometry, counterStandMaterial );
+            counterStandMesh.position.x = 0;
+            counterStandMesh.position.y = 20;
+            counterStandMesh.position.z = 64;
+            counterStandMaterial.map = textureCounterTop;
+            scene.add( counterStandMesh );
+            // Barpult END
+
+            // Polc START
+            shelfBackGeometry = new THREE.BoxGeometry( 190, 60, 2 );
+            shelfBackMaterial = new THREE.MeshBasicMaterial( { color: 0xddff33, wireframe: false, side: THREE.DoubleSide } );
+            shelfBackMesh = new THREE.Mesh( shelfBackGeometry, shelfBackMaterial );
+            shelfBackMaterial.map = textureCounterTop;
+            shelfBackMesh.position.x = 0;
+            shelfBackMesh.position.y = 70;
+            shelfBackMesh.position.z = 118;
+            scene.add( shelfBackMesh );
+
+            shelfBottomLevelGeometry = new THREE.BoxGeometry( 190, 10, 2 );
+            shelfBottomLevelMaterial = new THREE.MeshBasicMaterial( { color: 0x00008b, wireframe: false, side: THREE.DoubleSide } );
+            shelfBottomLevelMesh = new THREE.Mesh( shelfBottomLevelGeometry, shelfBottomLevelMaterial );
+            shelfBottomLevelMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            shelfBottomLevelMesh.position.x = 0;
+            shelfBottomLevelMesh.position.y = 56;
+            shelfBottomLevelMesh.position.z = 112;
+            scene.add( shelfBottomLevelMesh );
+
+            shelfMiddleLevelGeometry = new THREE.BoxGeometry( 190, 10, 2 );
+            shelfMiddleLevelMaterial = new THREE.MeshBasicMaterial( { color: 0x00008b, wireframe: false, side: THREE.DoubleSide } );
+            shelfMiddleLevelMesh = new THREE.Mesh( shelfMiddleLevelGeometry, shelfMiddleLevelMaterial );
+            shelfMiddleLevelMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            shelfMiddleLevelMesh.position.x = 0;
+            shelfMiddleLevelMesh.position.y = 74;
+            shelfMiddleLevelMesh.position.z = 112;
+            scene.add( shelfMiddleLevelMesh );
+
+            shelfTopLevelGeometry = new THREE.BoxGeometry( 190, 10, 2 );
+            shelfTopLevelMaterial = new THREE.MeshBasicMaterial( { color: 0x00008b, wireframe: false, side: THREE.DoubleSide } );
+            shelfTopLevelMesh = new THREE.Mesh( shelfTopLevelGeometry, shelfTopLevelMaterial );
+            shelfTopLevelMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            shelfTopLevelMesh.position.x = 0;
+            shelfTopLevelMesh.position.y = 92;
+            shelfTopLevelMesh.position.z = 112;
+            scene.add( shelfTopLevelMesh );
+            // Polc END
+
+            // Sorcsap START
+            path = new Tap( 15 );
+            beerTapGeometry = new THREE.TubeGeometry(path, 2000, 2, 8, false );
+            beerTapMaterial = new THREE.MeshStandardMaterial( { metalness: 0.5, roughness: 0.5, color: 0x4a5054, side: THREE.DoubleSide } );
+            beerTapMesh = new THREE.Mesh( beerTapGeometry, beerTapMaterial );
+            beerTapMesh.position.x = 10;
+            beerTapMesh.position.y = 56;
+            beerTapMesh.position.z = 65;
+            beerTapMesh.rotation.y = -1.0 * THREE.Math.degToRad( -90 );
+            scene.add( beerTapMesh );
+            // Sorcsap END
+
+            // SorcsapSoroshordo START
+            beerKegGeometry = new THREE.CylinderGeometry( 10, 10, 40, 64 );
+            beerKegMaterial = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: false } );
+            beerKegMesh = new THREE.Mesh( beerKegGeometry, beerKegMaterial );
+            beerKegMesh.position.y = 60;
+            beerKegMesh.position.z = 46;
+            beerKegMesh.position.x = 10;
+            scene.add( beerKegMesh );
+            // SorcsapSoroshordo END
+
+            // SorcsapSoroshordo2 START
+            beerKeg2Geometry = new THREE.CylinderGeometry( 10, 10, 40, 64 );
+            beerKeg2Material = new THREE.MeshBasicMaterial( { color: 0x0000b8, wireframe: false } );
+            beerKeg2Mesh = new THREE.Mesh( beerKeg2Geometry, beerKeg2Material );
+            beerKeg2Mesh.position.y = 60;
+            beerKeg2Mesh.position.z = 46;
+            beerKeg2Mesh.position.x = -10;
+            scene.add( beerKeg2Mesh );
+            // SorcsapSoroshordo2 END
+
+            // Sorcsap tekero START
+            beerKegTapGeometry = new THREE.CylinderGeometry( 5, 2, 5, 64 );
+            beerKegTapMaterial = new THREE.MeshBasicMaterial( { color: 0x00008b, wireframe: false } );
+            beerKegTapMesh = new THREE.Mesh( beerKegTapGeometry, beerKegTapMaterial );
+            beerKegTapMesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            beerKegTapMesh.position.y = 60;
+            beerKegTapMesh.position.z = 46;
+            beerKegTapMesh.position.x = 22;
+            scene.add( beerKegTapMesh );
+            // Sorcsap tekero END
+
+            // Sorcsap2 tekero START
+            beerKeg2TapGeometry = new THREE.CylinderGeometry( 5, 2, 5, 64 );
+            beerKeg2TapMaterial = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: false } );
+            beerKeg2TapMesh = new THREE.Mesh( beerKeg2TapGeometry, beerKeg2TapMaterial );
+            beerKeg2TapMesh.rotation.z = -1.0 * THREE.Math.degToRad( -90 );
+            beerKeg2TapMesh.position.y = 60;
+            beerKeg2TapMesh.position.z = 46;
+            beerKeg2TapMesh.position.x = -22;
+            scene.add( beerKeg2TapMesh );
+            // Sorcsap2 tekero END
+
+            // Biliardasztal START
+            textureLoader = new THREE.TextureLoader();
+            snookerTopTexture = textureLoader.load( 'assets/texture/GreenBaizeTexture.png' );
+
+            snookerTopGeometry = new THREE.PlaneGeometry( 120, 60 );
+            snookerTopMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xddff33,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            snookerTopMaterial.map = snookerTopTexture;
+            snookerTopMesh = new THREE.Mesh( snookerTopGeometry, snookerTopMaterial );
+            snookerTopMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            snookerTopMesh.position.z = -136;
+            snookerTopMesh.position.y = 40;
+            snookerTopMesh.position.x = -100;
+            scene.add( snookerTopMesh );
+
+            snookerTableGeometry = new THREE.BoxGeometry( 120, 38, 59 );
+            snookerTableMaterial = new THREE.MeshPhongMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            snookerTableMesh = new THREE.Mesh( snookerTableGeometry, snookerTableMaterial );
+            snookerTableMesh.position.z = -137;
+            snookerTableMesh.position.y = 19;
+            snookerTableMesh.position.x = -100;
+            scene.add( snookerTableMesh );
+
+            cue1Geometry = new THREE.CylinderGeometry( 1, 1, 50, 64, 1, false, 6, 6.3 );
+            cue1Material = new THREE.MeshBasicMaterial(
+                {
+                    color: 0xffff00
+                }
+            )
+            cue1Mesh = new THREE.Mesh( cue1Geometry, cue1Material );
+
+            cue1Mesh.position.x = -60;
+            cue1Mesh.position.y = 44;
+            cue1Mesh.position.z = -103;
+            cue1Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            cue1Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( cue1Mesh );
+
+            cue2Geometry = new THREE.CylinderGeometry( 1, 1, 50, 64, 1, false, 6, 6.3 );
+            cue2Material = new THREE.MeshBasicMaterial(
+                {
+                    color: 0xffff00
+                }
+            )
+            cue2Mesh = new THREE.Mesh( cue2Geometry, cue2Material );
+
+            cue2Mesh.position.x = -130;
+            cue2Mesh.position.y = 44;
+            cue2Mesh.position.z = -103;
+            cue2Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            cue2Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( cue2Mesh );
+
+            cue3Geometry = new THREE.CylinderGeometry( 1, 1, 50, 64, 1, false, 6, 6.3 );
+            cue3Material = new THREE.MeshBasicMaterial(
+                {
+                    color: 0xffff00
+                }
+            )
+            cue3Mesh = new THREE.Mesh( cue3Geometry, cue3Material );
+
+            cue3Mesh.position.x = -130;
+            cue3Mesh.position.y = 44;
+            cue3Mesh.position.z = -167;
+            cue3Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            cue3Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( cue3Mesh );
+
+            cue4Geometry = new THREE.CylinderGeometry( 1, 1, 50, 64, 1, false, 6, 6.3 );
+            cue4Material = new THREE.MeshBasicMaterial(
+                {
+                    color: 0xffff00
+                }
+            )
+            cue4Mesh = new THREE.Mesh( cue4Geometry, cue4Material );
+
+            cue4Mesh.position.x = -60;
+            cue4Mesh.position.y = 44;
+            cue4Mesh.position.z = -167;
+            cue4Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            cue4Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( cue4Mesh );
+
+            spotLight = new THREE.SpotLight( 0x00ffff, 1 );
+            spotLight.position.x = 160;
+            spotLight.position.y = 100;
+            spotLight.position.z = 50;
+            spotLight.angle = Math.PI / 16;
+            spotLight.target = snookerTableMesh;
+            scene.add( spotLight );
+
+            snookerSide1Geometry = new THREE.BoxGeometry( 120, 8, 4 );
+            snookerSide1Material = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            snookerSide1Mesh = new THREE.Mesh( snookerSide1Geometry, snookerSide1Material );
+            snookerSide1Mesh.position.z = -105;
+            snookerSide1Mesh.position.y = 40;
+            snookerSide1Mesh.position.x = -100;
+            scene.add( snookerSide1Mesh );
+
+            snookerSide2Geometry = new THREE.BoxGeometry( 64, 8, 4 );
+            snookerSide2Material = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            snookerSide2Mesh = new THREE.Mesh( snookerSide2Geometry, snookerSide2Material );
+            snookerSide2Mesh.position.z = -135;
+            snookerSide2Mesh.position.y = 40;
+            snookerSide2Mesh.position.x = -38;
+            snookerSide2Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            snookerSide2Mesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            snookerSide2Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( snookerSide2Mesh );
+
+            snookerSide3Geometry = new THREE.BoxGeometry( 120, 8, 4 );
+            snookerSide3Material = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            snookerSide3Mesh = new THREE.Mesh( snookerSide3Geometry, snookerSide3Material );
+            snookerSide3Mesh.position.z = -165;
+            snookerSide3Mesh.position.y = 40;
+            snookerSide3Mesh.position.x = -100;
+            scene.add( snookerSide3Mesh );
+
+            snookerSide4Geometry = new THREE.BoxGeometry( 64, 8, 4 );
+            snookerSide4Material = new THREE.MeshBasicMaterial( {
+                color: 0x00008b,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            snookerSide4Mesh = new THREE.Mesh( snookerSide4Geometry, snookerSide4Material );
+            snookerSide4Mesh.position.z = -135;
+            snookerSide4Mesh.position.y = 40;
+            snookerSide4Mesh.position.x = -162;
+            snookerSide4Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            snookerSide4Mesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            snookerSide4Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( snookerSide4Mesh );
+
+            pointLight = new THREE.PointLight( 0x00ffff, 0.8 );
+            pointLight.position.x = 300;
+            pointLight.position.y = 200;
+            pointLight.position.z = 40;
+            scene.add( pointLight );
+
+            // Golyo1 START
+            ball1Geometry = new THREE.SphereGeometry( 2, 32, 128 );
+            ball1Material = new THREE.MeshBasicMaterial( { color: 0x00008b, wireframe: true } );
+            //ball1Mesh = new THREE.Mesh( ball1Geometry, ball1Material );
+            ball1Mesh.position.x = -80;
+            ball1Mesh.position.y = 42;
+            ball1Mesh.position.z = -150;
+            scene.add( ball1Mesh );
+            // Golyo1 END
+
+            // Golyo2 START
+            ball2Geometry = new THREE.SphereGeometry( 2, 32, 128 );
+            ball2Material = new THREE.MeshBasicMaterial( { color: 0x0000ff, wireframe: true } );
+            ball2Mesh = new THREE.Mesh( ball2Geometry, ball2Material );
+            ball2Mesh.position.x = -60;
+            ball2Mesh.position.y = 42;
+            ball2Mesh.position.z = -160;
+            scene.add( ball2Mesh );
+            // Golyo2 END
+
+            // Golyo3 START
+            ball3Geometry = new THREE.SphereGeometry( 2, 32, 128 );
+            ball3Material = new THREE.MeshBasicMaterial( { color: 0xff0000, wireframe: true } );
+            ball3Mesh = new THREE.Mesh( ball3Geometry, ball3Material );
+            ball3Mesh.position.x = -100;
+            ball3Mesh.position.y = 42;
+            ball3Mesh.position.z = -140;
+            scene.add( ball3Mesh );
+            // Golyo3 END
+
+            // Golyo4 START
+            ball4Geometry = new THREE.SphereGeometry( 2, 32, 128 );
+            ball4Material = new THREE.MeshBasicMaterial( { color: 0x003300, wireframe: true } );
+            ball4Mesh = new THREE.Mesh( ball4Geometry, ball4Material );
+            ball4Mesh.position.x = -80;
+            ball4Mesh.position.y = 42;
+            ball4Mesh.position.z = -140;
+            scene.add( ball4Mesh );
+            // Golyo4 END
+            // Billiardasztal END
+
+            // Barszek START
+            barChairStand1Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChairStand1Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChairStand1Material.map = textureCounterTop;
+            barChairStand1Mesh = new THREE.Mesh( barChairStand1Geometry, barChairStand1Material );
+            scene.add( barChairStand1Mesh );
+            barChairStand1Mesh.position.x = 70;
+            barChairStand1Mesh.position.y = 12;
+
+            barChairStand2Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChairStand2Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChairStand2Material.map = textureCounterTop;
+            barChairStand2Mesh = new THREE.Mesh( barChairStand2Geometry, barChairStand2Material );
+            scene.add( barChairStand2Mesh );
+            barChairStand2Mesh.position.y = 12;
+            barChairStand2Mesh.position.x = 50;
+
+            barChairStand3Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChairStand3Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChairStand3Material.map = textureCounterTop;
+            barChairStand3Mesh = new THREE.Mesh( barChairStand3Geometry, barChairStand3Material );
+            scene.add( barChairStand3Mesh );
+            barChairStand3Mesh.position.x = 50;
+            barChairStand3Mesh.position.y = 12;
+            barChairStand3Mesh.position.z = 20;
+
+            barChairStand4Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChairStand4Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChairStand4Material.map = textureCounterTop;
+            barChairStand4Mesh = new THREE.Mesh( barChairStand4Geometry, barChairStand4Material );
+            scene.add( barChairStand4Mesh );
+            barChairStand4Mesh.position.x = 70;
+            barChairStand4Mesh.position.y = 12;
+            barChairStand4Mesh.position.z = 20;
+
+            barChairSitAmbientLight = new THREE.AmbientLight( 0x0000ff, 0.4 );
+            scene.add( barChairSitAmbientLight );
+
+            barChairSitGeometry = new THREE.BoxGeometry( 24, 2, 24 );
+            barChairSitMaterial = new THREE.MeshLambertMaterial( { wireframe: false, color: 0xffffff } );
+            barChairSitMesh = new THREE.Mesh( barChairSitGeometry, barChairSitMaterial );
+            scene.add( barChairSitMesh );
+            barChairSitMesh.position.x = 60;
+            barChairSitMesh.position.y = 25;
+            barChairSitMesh.position.z = 10;
+
+            barChairBackGeometry = new THREE.BoxGeometry( 24, 4, 24 );
+            barChairBackMaterial = new THREE.MeshBasicMaterial( { wireframe: false, color: 0x444444 } );
+            barChairBackMesh = new THREE.Mesh( barChairBackGeometry, barChairBackMaterial );
+            barChairBackMesh.rotation.x = -1.0 * THREE.Math.degToRad( -90 );
+            scene.add( barChairBackMesh );
+            barChairBackMesh.position.x = 60;
+            barChairBackMesh.position.y = 38;
+            barChairBackMesh.position.z = 0;
+            // Barszek END
+
+            // Barszek2 START
+            barChair2Stand1Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair2Stand1Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair2Stand1Material.map = textureCounterTop;
+            barChair2Stand1Mesh = new THREE.Mesh( barChair2Stand1Geometry, barChair2Stand1Material );
+            scene.add( barChair2Stand1Mesh );
+            barChair2Stand1Mesh.position.x = barChairStand1Mesh.position.x - 38;
+            barChair2Stand1Mesh.position.y = barChairStand1Mesh.position.y;
+
+            barChair2Stand2Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair2Stand2Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair2Stand2Material.map = textureCounterTop;
+            barChair2Stand2Mesh = new THREE.Mesh( barChair2Stand2Geometry, barChair2Stand2Material );
+            scene.add( barChair2Stand2Mesh );
+            barChair2Stand2Mesh.position.y = 12;
+            barChair2Stand2Mesh.position.x = barChair2Stand1Mesh.position.x - 20;
+
+            barChair2Stand3Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair2Stand3Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair2Stand3Material.map = textureCounterTop;
+            barChair2Stand3Mesh = new THREE.Mesh( barChair2Stand3Geometry, barChair2Stand3Material );
+            scene.add( barChair2Stand3Mesh );
+            barChair2Stand3Mesh.position.x = barChairStand3Mesh.position.x - 18;
+            barChair2Stand3Mesh.position.y = 12;
+            barChair2Stand3Mesh.position.z = 20;
+
+            barChair2Stand4Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair2Stand4Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair2Stand4Material.map = textureCounterTop;
+            barChair2Stand4Mesh = new THREE.Mesh( barChair2Stand4Geometry, barChair2Stand4Material );
+            scene.add( barChair2Stand4Mesh );
+            barChair2Stand4Mesh.position.x = barChair2Stand3Mesh.position.x - 20;
+            barChair2Stand4Mesh.position.y = 12;
+            barChair2Stand4Mesh.position.z = 20;
+
+            barChairSitAmbientLight = new THREE.AmbientLight( 0x0000ff, 0.4 );
+            scene.add( barChairSitAmbientLight );
+
+            barChair2SitGeometry = new THREE.BoxGeometry( 24, 2, 24 );
+            barChair2SitMaterial = new THREE.MeshLambertMaterial( { wireframe: false, color: 0xffffff } );
+            barChair2SitMesh = new THREE.Mesh( barChair2SitGeometry, barChair2SitMaterial );
+            scene.add( barChair2SitMesh );
+            barChair2SitMesh.position.x = barChairSitMesh.position.x - 38;
+            barChair2SitMesh.position.y = 25;
+            barChair2SitMesh.position.z = 10;
+
+            barChair2BackGeometry = new THREE.BoxGeometry( 24, 4, 24 );
+            barChair2BackMaterial = new THREE.MeshBasicMaterial( { wireframe: false, color: 0x444444 } );
+            barChair2BackMesh = new THREE.Mesh( barChair2BackGeometry, barChair2BackMaterial );
+            barChair2BackMesh.rotation.x = -1.0 * THREE.Math.degToRad( -90 );
+            scene.add( barChair2BackMesh );
+            barChair2BackMesh.position.x = barChairBackMesh.position.x - 38;
+            barChair2BackMesh.position.y = 38;
+            barChair2BackMesh.position.z = 0;
+            // Barszek2 END
+
+            // Barszek3 START
+            barChair3Stand1Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair3Stand1Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair3Stand1Material.map = textureCounterTop;
+            barChair3Stand1Mesh = new THREE.Mesh( barChair3Stand1Geometry, barChair3Stand1Material );
+            scene.add( barChair3Stand1Mesh );
+            barChair3Stand1Mesh.position.x = barChair2Stand1Mesh.position.x - 38;
+            barChair3Stand1Mesh.position.y = barChair2Stand1Mesh.position.y;
+
+            barChair3Stand2Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair3Stand2Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair3Stand2Material.map = textureCounterTop;
+            barChair3Stand2Mesh = new THREE.Mesh( barChair3Stand2Geometry, barChair3Stand2Material );
+            scene.add( barChair3Stand2Mesh );
+            barChair3Stand2Mesh.position.y = 12;
+            barChair3Stand2Mesh.position.x = barChair2Stand2Mesh.position.x - 38;
+
+            barChair3Stand3Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair3Stand3Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair3Stand3Material.map = textureCounterTop;
+            barChair3Stand3Mesh = new THREE.Mesh( barChair3Stand3Geometry, barChair3Stand3Material );
+            scene.add( barChair3Stand3Mesh );
+            barChair3Stand3Mesh.position.x = barChair2Stand3Mesh.position.x - 38;
+            barChair3Stand3Mesh.position.y = 12;
+            barChair3Stand3Mesh.position.z = 20;
+
+            barChair3Stand4Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair3Stand4Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair3Stand4Material.map = textureCounterTop;
+            barChair3Stand4Mesh = new THREE.Mesh( barChair3Stand4Geometry, barChair3Stand4Material );
+            scene.add( barChair3Stand4Mesh );
+            barChair3Stand4Mesh.position.x = barChair3Stand3Mesh.position.x - 20;
+            barChair3Stand4Mesh.position.y = 12;
+            barChair3Stand4Mesh.position.z = 20;
+
+            barChairSitAmbientLight = new THREE.AmbientLight( 0x0000ff, 0.4 );
+            scene.add( barChairSitAmbientLight );
+
+            barChair3SitGeometry = new THREE.BoxGeometry( 24, 2, 24 );
+            barChair3SitMaterial = new THREE.MeshLambertMaterial( { wireframe: false, color: 0xffffff } );
+            barChair3SitMesh = new THREE.Mesh( barChair3SitGeometry, barChair3SitMaterial );
+            scene.add( barChair3SitMesh );
+            barChair3SitMesh.position.x = barChair2SitMesh.position.x - 38;
+            barChair3SitMesh.position.y = 25;
+            barChair3SitMesh.position.z = 10;
+
+            barChair3BackGeometry = new THREE.BoxGeometry( 24, 4, 24 );
+            barChair3BackMaterial = new THREE.MeshBasicMaterial( { wireframe: false, color: 0x444444 } );
+            barChair3BackMesh = new THREE.Mesh( barChair3BackGeometry, barChair3BackMaterial );
+            barChair3BackMesh.rotation.x = -1.0 * THREE.Math.degToRad( -90 );
+            scene.add( barChair3BackMesh );
+            barChair3BackMesh.position.x = barChair2BackMesh.position.x - 38;
+            barChair3BackMesh.position.y = 38;
+            barChair3BackMesh.position.z = 0;
+            // Barszek3 END
+
+            // Barszek4 START
+            barChair4Stand1Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair4Stand1Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair4Stand1Material.map = textureCounterTop;
+            barChair4Stand1Mesh = new THREE.Mesh( barChair4Stand1Geometry, barChair4Stand1Material );
+            scene.add( barChair4Stand1Mesh );
+            barChair4Stand1Mesh.position.x = barChair3Stand1Mesh.position.x - 38;
+            barChair4Stand1Mesh.position.y = barChair3Stand1Mesh.position.y;
+
+            barChair4Stand2Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair4Stand2Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair4Stand2Material.map = textureCounterTop;
+            barChair4Stand2Mesh = new THREE.Mesh( barChair4Stand2Geometry, barChair4Stand2Material );
+            scene.add( barChair4Stand2Mesh );
+            barChair4Stand2Mesh.position.y = 12;
+            barChair4Stand2Mesh.position.x = barChair3Stand2Mesh.position.x - 38;
+
+            barChair4Stand3Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair4Stand3Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair4Stand3Material.map = textureCounterTop;
+            barChair4Stand3Mesh = new THREE.Mesh( barChair4Stand3Geometry, barChair4Stand3Material );
+            scene.add( barChair4Stand3Mesh );
+            barChair4Stand3Mesh.position.x = barChair3Stand3Mesh.position.x - 38;
+            barChair4Stand3Mesh.position.y = 12;
+            barChair4Stand3Mesh.position.z = 20;
+
+            barChair4Stand4Geometry = new THREE.BoxGeometry( 4, 24, 4 );
+            barChair4Stand4Material = new THREE.MeshBasicMaterial( { wireframe: false } );
+            barChair4Stand4Material.map = textureCounterTop;
+            barChair4Stand4Mesh = new THREE.Mesh( barChair4Stand4Geometry, barChair4Stand4Material );
+            scene.add( barChair4Stand4Mesh );
+            barChair4Stand4Mesh.position.x = barChair3Stand4Mesh.position.x - 38;
+            barChair4Stand4Mesh.position.y = 12;
+            barChair4Stand4Mesh.position.z = 20;
+
+            barChairSitAmbientLight = new THREE.AmbientLight( 0x0000ff, 0.4 );
+            scene.add( barChairSitAmbientLight );
+
+            barChair4SitGeometry = new THREE.BoxGeometry( 24, 2, 24 );
+            barChair4SitMaterial = new THREE.MeshLambertMaterial( { wireframe: false, color: 0xffffff } );
+            barChair4SitMesh = new THREE.Mesh( barChair3SitGeometry, barChair3SitMaterial );
+            scene.add( barChair4SitMesh );
+            barChair4SitMesh.position.x = barChair3SitMesh.position.x - 38;
+            barChair4SitMesh.position.y = 25;
+            barChair4SitMesh.position.z = 10;
+
+            barChair4BackGeometry = new THREE.BoxGeometry( 24, 4, 24 );
+            barChair4BackMaterial = new THREE.MeshBasicMaterial( { wireframe: false, color: 0x444444 } );
+            barChair4BackMesh = new THREE.Mesh( barChair4BackGeometry, barChair4BackMaterial );
+            barChair4BackMesh.rotation.x = -1.0 * THREE.Math.degToRad( -90 );
+            scene.add( barChair4BackMesh );
+            barChair4BackMesh.position.x = barChair3BackMesh.position.x - 38;
+            barChair4BackMesh.position.y = 38;
+            barChair4BackMesh.position.z = 0;
+            // Barszek4 END
+
+            // Korso1 START
+            cupStand1Geometry = new THREE.CylinderGeometry( 1, 4, 2, 64, 1, true, 0, 6.3 );
+            cupStand1Material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+            cupStand1Mesh = new THREE.Mesh( cupStand1Geometry, cupStand1Material );
+            cupStand1Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupStand1Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupStand1Mesh.position.x = 62;
+            cupStand1Mesh.position.y = 41;
+            cupStand1Mesh.position.z = 40;
+            //scene.add( cupStand1Mesh );
+
+            cupNeck1Geometry = new THREE.CylinderGeometry( 1, 1, 4, 64, 1, true, 0, 6.3 );
+            cupNeck1Material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+            cupNeck1Mesh = new THREE.Mesh( cupNeck1Geometry, cupNeck1Material );
+            cupNeck1Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupNeck1Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupNeck1Mesh.position.x = 62;
+            cupNeck1Mesh.position.y = 44;
+            cupNeck1Mesh.position.z = 40;
+            //scene.add( cupNeck1Mesh );
+
+            cupSipBottom1Geometry = new THREE.CylinderGeometry( 4, 1, 1, 64, 1, false, 0, 6.3 );
+            cupSipBottom1Material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+            cupSipBottom1Mesh = new THREE.Mesh( cupSipBottom1Geometry, cupSipBottom1Material );
+            cupSipBottom1Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipBottom1Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipBottom1Mesh.position.x = 62;
+            cupSipBottom1Mesh.position.y = 46;
+            cupSipBottom1Mesh.position.z = 40;
+            //scene.add( cupSipBottom1Mesh );
+
+            cupSipSide1Geometry = new THREE.CylinderGeometry( 4, 4, 10, 64, 1, true, 0, 6.3 );
+            cupSipSide1Material = new THREE.MeshBasicMaterial( {color: 0xff0000, side: THREE.DoubleSide} );
+            cupSipSide1Mesh = new THREE.Mesh( cupSipSide1Geometry, cupSipSide1Material );
+            cupSipSide1Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipSide1Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipSide1Mesh.position.x = 62;
+            cupSipSide1Mesh.position.y = 51;
+            cupSipSide1Mesh.position.z = 40;
+            //scene.add( cupSipSide1Mesh );
+
+            cupGroupOne = new THREE.Group();
+            cupGroupOne.add( cupStand1Mesh );
+            cupGroupOne.add( cupNeck1Mesh );
+            cupGroupOne.add( cupSipBottom1Mesh );
+            cupGroupOne.add( cupSipSide1Mesh );
+            scene.add( cupGroupOne );
+            // Korso1 END
+
+            // Korso2 START
+            cupStand2Geometry = new THREE.CylinderGeometry( 1, 4, 2, 64, 1, true, 0, 6.3 );
+            cupStand2Material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+            cupStand2Mesh = new THREE.Mesh( cupStand2Geometry, cupStand2Material );
+            cupStand2Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupStand2Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupStand2Mesh.position.x = -60;
+            cupStand2Mesh.position.y = 41;
+            cupStand2Mesh.position.z = 40;
+            //scene.add( cupStand2Mesh );
+
+            cupNeck2Geometry = new THREE.CylinderGeometry( 1, 1, 4, 64, 1, true, 0, 6.3 );
+            cupNeck2Material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+            cupNeck2Mesh = new THREE.Mesh( cupNeck2Geometry, cupNeck2Material );
+            cupNeck2Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupNeck2Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupNeck2Mesh.position.x = -60;
+            cupNeck2Mesh.position.y = 44;
+            cupNeck2Mesh.position.z = 40;
+            //scene.add( cupNeck2Mesh );
+
+            cupSipBottom2Geometry = new THREE.CylinderGeometry( 4, 1, 1, 64, 1, false, 0, 6.3 );
+            cupSipBottom2Material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+            cupSipBottom2Mesh = new THREE.Mesh( cupSipBottom2Geometry, cupSipBottom2Material );
+            cupSipBottom2Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipBottom2Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipBottom2Mesh.position.x = -60;
+            cupSipBottom2Mesh.position.y = 46;
+            cupSipBottom2Mesh.position.z = 40;
+            //scene.add( cupSipBottom1Mesh );
+
+            cupSipSide2Geometry = new THREE.CylinderGeometry( 4, 4, 10, 64, 1, true, 0, 6.3 );
+            cupSipSide2Material = new THREE.MeshBasicMaterial( {color: 0xff0000, side: THREE.DoubleSide} );
+            cupSipSide2Mesh = new THREE.Mesh( cupSipSide2Geometry, cupSipSide2Material );
+            cupSipSide2Mesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipSide2Mesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            cupSipSide2Mesh.position.x = -60;
+            cupSipSide2Mesh.position.y = 51;
+            cupSipSide2Mesh.position.z = 40;
+            //scene.add( cupSipSide2Mesh );
+
+            cupGroupTwo = new THREE.Group();
+            cupGroupTwo.add( cupStand2Mesh );
+            cupGroupTwo.add( cupNeck2Mesh );
+            cupGroupTwo.add( cupSipBottom2Mesh );
+            cupGroupTwo.add( cupSipSide2Mesh );
+            scene.add( cupGroupTwo );
+            // Korso2 END
+
+            // Hangulatos lampa elso START
+            halfLampAmbientLight1 = new THREE.AmbientLight( 0xf4ddbe, 0.4 );
+            scene.add( halfLampAmbientLight1 );
+
+            lamp1Geometry = new THREE.CylinderGeometry( 4, 1, 10, 64, 1, true, 0, 3.1 );
+            lamp1Material = new THREE.MeshLambertMaterial( {color: 0xffffff, side: THREE.DoubleSide } );
+            lamp1Half = new THREE.Mesh( lamp1Geometry, lamp1Material );
+            lamp1Half.position.x = -180;
+            lamp1Half.position.y = 80;
+            scene.add( lamp1Half );
+            // Hangulatos lampa elso END
+
+            // Hangulatos lampa masodik START
+            halfLampAmbientLight2 = new THREE.AmbientLight( 0xf4ddbe, 0.4 );
+            scene.add( halfLampAmbientLight2 );
+
+            lamp2Geometry = new THREE.CylinderGeometry( 4, 1, 10, 64, 1, true, 0, 3.1 );
+            lamp2Material = new THREE.MeshLambertMaterial( {color: 0xffffff, side: THREE.DoubleSide } );
+            lamp2Half = new THREE.Mesh( lamp2Geometry, lamp2Material );
+            lamp2Half.position.x = -180;
+            lamp2Half.position.y = 80;
+            lamp2Half.position.z = -100;
+            scene.add( lamp2Half );
+            // Hangulatos lampa masodik END
+
+            // Huto START
+            fridgeLowerGeometry = new THREE.BoxGeometry( 56, 56, 56 );
+            fridgeLowerMaterial = new THREE.MeshBasicMaterial( { color: 0xddff33, wireframe: false } );
+            fridgeLowerMesh = new THREE.Mesh( fridgeLowerGeometry, fridgeLowerMaterial );
+            fridgeLowerMesh.position.x = -151;
+            fridgeLowerMesh.position.y = 28;
+            fridgeLowerMesh.position.z = 80;
+            fridgeLowerMaterial.map = textureCounterTop;
+            scene.add( fridgeLowerMesh );
+
+            fridgeMidGeometry = new THREE.BoxGeometry( 56, 4, 56 );
+            fridgeMidMaterial = new THREE.MeshBasicMaterial( { color: 0x4a5054, wireframe: false } );
+            fridgeMidMesh = new THREE.Mesh( fridgeMidGeometry, fridgeMidMaterial );
+            fridgeMidMesh.position.x = -151;
+            fridgeMidMesh.position.y = 58;
+            fridgeMidMesh.position.z = 80;
+            scene.add( fridgeMidMesh );
+
+            fridgeTopGeometry = new THREE.BoxGeometry( 56, 56, 56 );
+            fridgeTopMaterial = new THREE.MeshBasicMaterial( { color: 0xddff33, wireframe: false } );
+            fridgeTopMesh = new THREE.Mesh( fridgeTopGeometry, fridgeTopMaterial );
+            fridgeTopMesh.position.x = -151;
+            fridgeTopMesh.position.y = 88;
+            fridgeTopMesh.position.z = 80;
+            fridgeTopMaterial.map = textureCounterTop;
+            scene.add( fridgeTopMesh );
+
+            fridgeOpenerGeometry = new THREE.BoxGeometry( 4, 4, 16 );
+            fridgeOpenerMaterial = new THREE.MeshBasicMaterial( { color: 0x4a5054, wireframe: false } );
+            fridgeOpenerMesh = new THREE.Mesh( fridgeOpenerGeometry, fridgeOpenerMaterial );
+            fridgeOpenerMesh.position.x = -122;
+            fridgeOpenerMesh.position.y = 80;
+            fridgeOpenerMesh.position.z = 62;
+            fridgeOpenerMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( fridgeOpenerMesh );
+            // Huto END
+
+            // Zenegep START
+            phonographCylinderGeometry = new THREE.CylinderGeometry(14.2, 1, 23, 64, 1, true, 0, 6.3);
+            phonographCylinderMaterial = new THREE.MeshBasicMaterial( { color: 0xc9ae5d, side: THREE.DoubleSide } );
+            phonographCylinderMesh = new THREE.Mesh( phonographCylinderGeometry, phonographCylinderMaterial );
+            phonographCylinderMesh.position.x = 64;
+            phonographCylinderMesh.position.y = 61;
+            phonographCylinderMesh.position.z = 81;
+            scene.add( phonographCylinderMesh );
+
+            phonographStandGeometry = new THREE.BoxGeometry( 24, 24, 2 );
+            phonographStandMaterial = new THREE.MeshBasicMaterial( { color: 0x4a5054, side: THREE.DoubleSide, wireframe: false } );
+            phonographStandMesh = new THREE.Mesh( phonographStandGeometry, phonographStandMaterial );
+            phonographStandMesh.position.x = 84;
+            phonographStandMesh.position.y = 41;
+            phonographStandMesh.position.z = 70;
+            phonographStandMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+
+            phonographAudioListener = new THREE.AudioListener();
+            camera.add( phonographAudioListener);
+            positionalAudio = new THREE.PositionalAudio( phonographAudioListener );
+            load = new THREE.AudioLoader();
+            load.load('assets/sound/free.mp3', function (buff) {
+                // A zenet bepakoljuk a memoriaba
+                positionalAudio.setBuffer(buff);
+                positionalAudio.setRefDistance(40);
+                positionalAudio.play();
+            });
+            phonographCylinderMesh.add(positionalAudio);
+            scene.add( phonographStandMesh );
+
+            phonographStandExtenderGeometry = new THREE.BoxGeometry( 12, 2, 2 );
+            phonographStandExtenderMaterial = new THREE.MeshBasicMaterial( { color: 0x4a5054, side: THREE.DoubleSide, wireframe: false } );
+            phonographStandExtenderMesh = new THREE.Mesh( phonographStandExtenderGeometry, phonographStandExtenderMaterial );
+            phonographStandExtenderMesh.position.x = 68;
+            phonographStandExtenderMesh.position.y = 41;
+            phonographStandExtenderMesh.position.z = 81;
+            phonographStandExtenderMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            scene.add( phonographStandExtenderMesh );
+
+            phonographStandPoleGeometry = new THREE.CylinderGeometry( 1, 1, 8, 64, 1, true, 0, 6.3 );
+            phonographStandPoleMaterial = new THREE.MeshBasicMaterial( {color: 0xc9ae5d, side: THREE.DoubleSide} );
+            phonographStandPoleMesh = new THREE.Mesh( phonographStandPoleGeometry, phonographStandPoleMaterial );
+            phonographStandPoleMesh.rotation.x = -1.0 * THREE.Math.degToRad( 180 );
+            phonographStandPoleMesh.rotation.z = -1.0 * THREE.Math.degToRad( 180 );
+            phonographStandPoleMesh.position.x = 64;
+            phonographStandPoleMesh.position.y = 46;
+            phonographStandPoleMesh.position.z = 81;
+            scene.add( phonographStandPoleMesh );
+
+            recordGeometry = new THREE.CylinderGeometry( 8, 8, 1, 64, 64, false, 6, 6.3 );
+            recordMaterial = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } );
+            recordMesh = new THREE.Mesh( recordGeometry, recordMaterial );
+            recordMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            recordMesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            recordMesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            recordMesh.position.x = 86;
+            recordMesh.position.y = 43;
+            recordMesh.position.z = 68;
+            scene.add( recordMesh );
+            // Zenegep END
+
+            // Ajto START
+            doorGeometry = new THREE.BoxGeometry(100, 0.5, 61.4);
+            doorMaterial = new THREE.MeshPhongMaterial(
+                {
+                    color: 0x00ff00
+                }
+            );
+            doorMaterial.map = textureCounterTop;
+            doorMesh = new THREE.Mesh( doorGeometry, doorMaterial );
+            doorMesh.rotation.z = -1.0 * THREE.Math.degToRad( 90 );
+            doorMesh.position.x = 179.5;
+            doorMesh.position.y = 50;
+            doorMesh.position.z = -25.28; // !
+            scene.add( doorMesh );
+            // Ajto END
+
+            // Uvegablak az ajto felett
+            wallDoorUpGeometry = new THREE.PlaneGeometry( 61.62, 20 );
+            wallDoorUpMaterial = new THREE.MeshBasicMaterial( {
+                color: 0xdd3333,
+                wireframe: false,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.4
+            } );
+            wallDoorUpMesh = new THREE.Mesh( wallDoorUpGeometry, wallDoorUpMaterial );
+            wallDoorUpMesh.rotation.y = -1.0 * THREE.Math.degToRad( 90 );
+            wallDoorUpMesh.position.y = 109.97;
+            wallDoorUpMesh.position.z = -25.34;
+            wallDoorUpMesh.position.x = 180;
+            scene.add( wallDoorUpMesh );
+
+            // Plusz retegnyi talaj
+            groundDownGeometry = new THREE.PlaneGeometry( 360, 300 );
+            groundDownMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x008000,
+                wireframe: false,
+                side: THREE.DoubleSide
+            } );
+            groundDownMesh = new THREE.Mesh( groundDownGeometry, groundDownMaterial );
+            groundDownMesh.rotation.x = -1.0 * THREE.Math.degToRad( 90 );
+            groundDownMesh.position.z = -30;
+            groundDownMesh.position.y = -0.35;
+            scene.add( groundDownMesh );
+
+            // Esemenykezelok
+            window.addEventListener( 'resize', handleWindowResize, false );
+            window.addEventListener( 'keydown', handleKeyDown );
+            window.addEventListener( 'keyup', handleKeyUp );
+
+            // Kamera vezerlese
+            controls = new THREE.TrackballControls( camera, renderer.domElement );
+            controls.rotateSpeed = 5.0;
+            controls.panSpeed = 1.0;
+
+            // Elso kepkocka rajzolasa
+            render();
+        }
+
+        // Sorcsap
+        function Tap(scale) {
+            // Keszitunk egy gorbuletet.
+            // scale parametert allitunk.
+            // Ha a scale undefined, azaz nincs erteke, akkor az alapertelmezett ertek 1, egyebkent pedig a parameterben kapott ertek
+            THREE.Curve.call( this );
+            this.scale = ( scale === undefined ) ? 1 : scale;
+        }
+
+        // Objektum prototipus letrehozasa
+        Tap.prototype = Object.create( THREE.Curve.prototype );
+        Tap.prototype.constructor = Tap;
+
+        // A gorbe pozicioja
+        Tap.prototype.getPoint = function ( t ) {
+            tapx = t * 2 - 0.7;
+            // Y tengely menten gorbulet kialakitasa
+            tapy = Math.sin( 2 * Math.PI * t );
+            tapz = 0;
+
+            // Vektor felepitese a parameterek alapjan es meretezes
+            return new THREE.Vector3( tapx, tapy, tapz ).multiplyScalar( this.scale );
+        };
+
+        function handleKeyDown(event) {
+            switch (event.keyCode) {
+                // 1 sima
+                case 49:
+                    scene.remove(wallSouthMesh);
+                    scene.remove(wallWestMesh);
+                    scene.remove(roofMesh);
+                    break;
+                // 1 KeyPad
+                case 97:
+                    scene.remove(wallSouthMesh);
+                    scene.remove(wallWestMesh);
+                    scene.remove(roofMesh);
+                    break;
+                // 2 sima
+                case 50:
+                    scene.add(wallSouthMesh);
+                    scene.add(wallWestMesh);
+                    scene.add(roofMesh);
+                    break;
+                // 2 KeyPad
+                case 98:
+                    scene.add(wallSouthMesh);
+                    scene.add(wallWestMesh);
+                    scene.add(roofMesh);
+                    break;
+                // 3 sima
+                case 51:
+                    pointLight.visible = false;
+                    break;
+                // 3 KeyPad
+                case 99:
+                    pointLight.visible = false;
+                    break;
+                // 4 sima
+                case 52:
+                    pointLight.visible = true;
+                    break;
+                // 4 KeyPad
+                case 100:
+                    pointLight.visible = true;
+                    break;
+                // 5 sima
+                case 53:
+                    halfLampAmbientLight1.visible = false;
+                    halfLampAmbientLight2.visible = false;
+                    spotLight.visible = false;
+                    barChairSitAmbientLight.visible = false;
+                    break;
+                // 6 sima
+                case 54:
+                    halfLampAmbientLight1.visible = true;
+                    halfLampAmbientLight2.visible = true;
+                    spotLight.visible = true;
+                    barChairSitAmbientLight.visible = true;
+                    break;
+                // 5 KeyPad
+                case 101:
+                    halfLampAmbientLight1.visible = false;
+                    halfLampAmbientLight2.visible = false;
+                    spotLight.visible = false;
+                    barChairSitAmbientLight.visible = false;
+                    break;
+                // 6 KeyPad
+                case 102:
+                    halfLampAmbientLight1.visible = true;
+                    halfLampAmbientLight2.visible = true;
+                    spotLight.visible = true;
+                    barChairSitAmbientLight.visible = true;
+                    break;
+                // F1
+                case 112:
+                    event.preventDefault();
+                    document.getElementById("studentText").style.visibility = "visible";
+                    document.getElementById("studentInfo").style.visibility = "visible";
+                    document.getElementById("studentInfo").style.visibility = "visible";
+                    document.getElementById("infopanel1").style.visibility = "visible";
+                    document.getElementById("infopanel2").style.visibility = "visible";
+                    document.getElementById("keyText").style.visibility = "visible";
+                    document.getElementById("keyInfo").style.visibility = "visible";
+                    break;
+                // - KeyPad
+                case 109:
+                    positionalAudio.pause();
+                    break;
+                // - UK sima
+                case 189:
+                    positionalAudio.pause();
+                    break;
+                // + KeyPad
+                case 107:
+                    positionalAudio.play();
+                    break;
+                // = UK
+                case 187:
+                    positionalAudio.play();
+                    break;
+                // C
+                case 67:
+                    //doorMesh.position.x = doorStart.x;
+                    //doorMesh.position.z = doorStart.z;
+                    doorStart = { x: 180.5, z: 37 };
+                    doorEnd = { x: 179.5, z: -25.28 };
+                    doorOpen = new TWEEN.Tween(doorEnd).to(doorStart, 2000).delay(500).easing(TWEEN.Easing.Elastic.InOut).onUpdate(function () {
+                        doorMesh.position.x = doorEnd.x;
+                        doorMesh.position.z = doorEnd.z;
+                    }).start();
+                    break;
+                // V
+                case 86:
+                    //doorMesh.position.x = doorEnd.x;
+                    //doorMesh.position.z = doorEnd.z;
+                    doorStart = { x: 180.5, z: 37 };
+                    doorEnd = { x: 179.5, z: -25.28 };
+                    doorClose = new TWEEN.Tween(doorStart).to(doorEnd, 2000).delay(500).easing(TWEEN.Easing.Elastic.InOut).onUpdate(function () {
+                        doorMesh.position.x = doorStart.x;
+                        doorMesh.position.z = doorStart.z;
+                    }).start();
+                    break;
+            }
+        }
+
+        function handleKeyUp(event) {
+            switch (event.keyCode) {
+                // F1
+                case 112:
+                    event.preventDefault();
+                    document.getElementById("studentText").style.visibility = "hidden";
+                    document.getElementById("studentInfo").style.visibility = "hidden";
+                    document.getElementById("studentInfo").style.visibility = "hidden";
+                    document.getElementById("infopanel1").style.visibility = "hidden";
+                    document.getElementById("infopanel2").style.visibility = "hidden";
+                    document.getElementById("keyText").style.visibility = "hidden";
+                    document.getElementById("keyInfo").style.visibility = "hidden";
+                    break;
+            }
+        }
+        
+        function handleWindowResize() {
+            // Az ablak atmeretezese eseten a kamera vetitesi parameterek ujraszamolasa
+            HEIGHT = window.innerHeight;
+            WIDTH = window.innerWidth;
+            console.log( 'WIDTH=' + WIDTH + '; HEIGHT=' + HEIGHT );
+            renderer.setSize( WIDTH, HEIGHT );
+            aspectRatio = WIDTH / HEIGHT;
+            camera.aspect = aspectRatio;
+            camera.updateProjectionMatrix();
+        }
+
+        function blenderLoader() {
+            var obj = 'assets/models/Poolball8.obj';
+            var mtl = 'assets/models/Poolball8.mtl';
+
+            new THREE.MTLLoader().load(mtl, function (mat) {
+                mat.preload();
+                new THREE.OBJLoader().setMaterials(mat)
+                    .load(obj, function (obj) {
+                        ball1Mesh = obj;
+                        console.log(obj);
+                        init();
+                    });
+            });
+        }
+
+        var render = function () {
+            // Ujabb kepkocka rajzolasanak kerese.
+            // Maximalisan 60 FPS-t biztosít a rendszer.
+            requestAnimationFrame( render );
+            // Kamera vezerles
+            controls.update();
+            // Statisztika frssitese
+            statsForFPS.update();
+
+            // Ventillator forgatasa
+            fanMesh.rotation.y -= 0.1;
+
+            // TWEEN animacio frissitese
+            TWEEN.update();
+
+            // 3D -> 2D vetített kep kiszamítasa.
+            // scene 3D színter kepe a kamera szemszogebol.
+            renderer.render( scene, camera );
+        };
+        // A HTML-ben azert hasznalok wv-t, mert az a virewport szelessegehez igazodik, azaz nem kell amegjeleno szoveget CSS-es media querykkel rendszbalyozni, hanem mehet minden egyszeruen
+    </script>
+    <div id="studentText" style="visibility: hidden" font-size="10wv">
+        Informaciok
+    </div>
+    <div id="studentInfo" style="visibility: hidden" font-size="10wv">
+        <p id="infopanel1" style="visibility: hidden" font-size="10wv">
+            Nev: Bozsik Armand Viktor<br/>
+            Szak: Programtervezo Informatikus <br />
+            Felev: 5 <br />
+            Tanev: 2018/19 <br />
+            <br />
+            Zene: Rolemusic - "The Pirate And The Dancer" (freemusicarchive.org)
+        </p>
+    </div>
+    <div id="keyText" style="visibility: hidden" font-size="10wv">
+        Hasznalhato billentyuk
+    </div>
+    <div id="keyInfo" style="visibility: hidden" font-size="10wv">
+        <p id="infopanel2" style="visibility: hidden" font-size="10wv">
+            1: Falak eltuntetese <br />
+            2: Falak visszarakasa <br />
+            3: Pontfeny kikapcsolasa <br />
+            4: Pontfeny bekapcsolasa <br />
+            5: A tobbi feny kikapcsolasa <br />
+            6: A tobbi feny bekapcsolasa <br />
+            -: US/UK kiosztason nemitja a zenet <br />
+            +: US/UK kiosztason inditja/folytatja a zenet <br />
+            -: A NumPad-en talalhato gomb. Ugyanazt teszi mint a fenti <br />
+            +: A NumPad-en talahato gomb. Ugyanazt teszi mint a fenti. <br />
+            C: Ajto nyitasa <br />
+            V: Ajto zarasa <br />
+        </p>
+    </div>
+</body>
+</html>
