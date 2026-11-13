@@ -1,0 +1,5 @@
+name = "bar-armands-dev"
+compatibility_date = "2026-11-14"
+
+[assets]
+directory = "."
